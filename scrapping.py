@@ -1,6 +1,7 @@
+import json
 import time
 import types
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Optional, Type
 from urllib.parse import urljoin
 
@@ -9,6 +10,7 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from slugify import slugify
 
 BASE_URL = "https://www.mcdonalds.com/"
 endpoint_menu = "ua/uk-ua/eat/fullmenu.html"
@@ -104,3 +106,16 @@ def scrape_all_links(driver: webdriver) -> list[Product]:
         all_products.append(scrape_detail_product(driver))
 
     return all_products
+
+
+def get_all_products() -> None:
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")
+    with WebDriver(webdriver.Chrome(options=options)) as driver:
+        products = {slugify(product.name): asdict(product) for product in scrape_all_links(driver)}
+        with open("product.json", "w", encoding="UTF-8") as json_file:
+            json.dump(products, json_file, indent=4, ensure_ascii=False)
+
+
+if __name__ == "__main__":
+    get_all_products()
