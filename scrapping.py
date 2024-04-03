@@ -109,6 +109,9 @@ def scrape_all_links(driver: webdriver) -> list[Product]:
 
 
 def get_all_products() -> None:
+    """
+    Scrapes and saves all product information to a JSON file.
+    """
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
     with WebDriver(webdriver.Chrome(options=options)) as driver:
