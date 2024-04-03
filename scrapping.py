@@ -1,9 +1,13 @@
+import time
 import types
 from dataclasses import dataclass
 from typing import Optional, Type
 from urllib.parse import urljoin
 
 from selenium import webdriver
+from selenium.webdriver import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
 BASE_URL = "https://www.mcdonalds.com/"
@@ -28,7 +32,6 @@ class WebDriver:
     """
     Context manager for managing WebDriver instance.
     """
-
     def __init__(self, driver: webdriver) -> None:
         self.driver = driver
 
@@ -42,6 +45,47 @@ class WebDriver:
             exc_tb: Optional[types.TracebackType]
     ) -> None:
         self.driver.quit()
+
+
+def parse_product(driver: webdriver):
+    """
+    Parses product information from the product detail page.
+    """
+    time.sleep(0.5)
+    detail_info = driver.find_elements(
+        By.CSS_SELECTOR,
+        "ul.cmp-nutrition-summary__heading-primary > "
+        "li.cmp-nutrition-summary__heading-primary-item"
+    )
+    secondary_nutrition = driver.find_elements(
+        By.CSS_SELECTOR,
+        "div.cmp-nutrition-summary__details-column-view-mobile > "
+        "ul > li.label-item"
+    )
+    return Product(
+        name=driver.find_element(By.CSS_SELECTOR, "span.cmp-product-details-main__heading-title").text.replace("®", ""),
+        description=driver.find_element(By.CSS_SELECTOR, "div.cmp-text").text.strip(),
+        calories=detail_info[0].find_elements(By.CSS_SELECTOR, "span.value > span")[2].text,
+        fats=detail_info[1].find_elements(By.CSS_SELECTOR, "span.value > span")[2].text,
+        carbs=detail_info[2].find_elements(By.CSS_SELECTOR, "span.value > span")[2].text,
+        proteins=detail_info[3].find_elements(By.CSS_SELECTOR, "span.value > span")[2].text,
+        unsaturated=secondary_nutrition[0].find_elements(By.CSS_SELECTOR, "span.value > span")[0].text,
+        sugar=secondary_nutrition[1].find_elements(By.CSS_SELECTOR, "span.value > span")[0].text,
+        salt=secondary_nutrition[2].find_elements(By.CSS_SELECTOR, "span.value > span")[0].text,
+        portion=secondary_nutrition[3].find_elements(By.CSS_SELECTOR, "span.value > span")[0].text,
+    )
+
+
+def scrape_detail_product(driver):
+    """
+    Scrapes product information from the product detail page.
+    """
+    button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.CSS_SELECTOR, "h2.cmp-accordion__header > button.cmp-accordion__button"))
+    )
+    ActionChains(driver).move_to_element(button).perform()
+    button.click()
+    return parse_product(driver)
 
 
 def scrape_all_links(driver: webdriver) -> list[Product]:
