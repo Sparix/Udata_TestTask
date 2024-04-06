@@ -34,6 +34,7 @@ class WebDriver:
     """
     Context manager for managing WebDriver instance.
     """
+
     def __init__(self, driver: webdriver) -> None:
         self.driver = driver
 
@@ -64,8 +65,13 @@ def parse_product(driver: webdriver):
         "div.cmp-nutrition-summary__details-column-view-mobile > "
         "ul > li.label-item"
     )
+    name_product = driver.find_element(
+        By.CSS_SELECTOR,
+        "span.cmp-product-details-main__heading-title"
+    ).text.replace("®", "")
+    print(name_product)
     return Product(
-        name=driver.find_element(By.CSS_SELECTOR, "span.cmp-product-details-main__heading-title").text.replace("®", ""),
+        name=name_product,
         description=driver.find_element(By.CSS_SELECTOR, "div.cmp-text").text.strip(),
         calories=detail_info[0].find_elements(By.CSS_SELECTOR, "span.value > span")[2].text,
         fats=detail_info[1].find_elements(By.CSS_SELECTOR, "span.value > span")[2].text,
@@ -78,7 +84,7 @@ def parse_product(driver: webdriver):
     )
 
 
-def scrape_detail_product(driver):
+def scrape_detail_product(driver: webdriver) -> Product:
     """
     Scrapes product information from the product detail page.
     """
